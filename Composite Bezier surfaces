@@ -1,0 +1,214 @@
+from manim import *
+import numpy as np
+import random
+class BezierSurface(ThreeDScene):
+
+    def construct(self):
+
+        def SuprafataBezier(x,y,z):
+            # Define number of cells in each direction
+            uCELLS = 12
+            wCELLS = 10
+            # Define number of control points in each direction
+            uPTS = np.size(x,0)
+            wPTS = np.size(x,1)
+
+            # Define number of divisions
+            n = uPTS - 1
+            m = wPTS - 1
+
+            # Define parametric variable
+            u = np.linspace(0,1,uCELLS)
+            w = np.linspace(0,1,wCELLS)
+
+            # Define the Bernstein polynomial
+            b = []
+            d = []
+
+            # Initialize matrices for x, y, z, and the Bezier curve
+            xBezier = np.zeros((uCELLS, wCELLS))
+            yBezier = np.zeros((uCELLS, wCELLS))
+            zBezier = np.zeros((uCELLS, wCELLS))
+
+            # Define the binomial coefficient
+            def Ni(n,i):
+                return np.math.factorial(n) / (np.math.factorial(i) * np.math.factorial(n-i))
+
+            def Mj(m,j):
+                return np.math.factorial(m) / (np.math.factorial(j) * np.math.factorial(m-j))
+
+            # Define the Bernstein polynomial J(u)n,i = (n i) u^i (1-u)^n-i
+            def J(n,i,u):
+                return np.matrix(Ni(n, i) * (u ** i) * (1-u) ** (n-i))
+
+            def K(m,j,w):
+                return np.matrix(Mj(m, j) * (w ** j) * (1-w) ** (m-j))
+
+            # Loop through each control point and calculate the Bezier surface
+            for i in range(0,uPTS):
+                for j in range(0, wPTS):
+                    b.append(J(n, i, u))
+                    d.append(K(m, j, w))
+
+                    # Transpose J
+                    Jt = J(n,i,u).transpose()
+
+                    # Calculate the Bezier surface Q(u,w) = SUM(i=0->n)SUM(j=0->m) B i,j * J(u)n,i * K(w)m,j
+                    xBezier = Jt * K(m, j, w) * x[i,j] + xBezier
+                    yBezier = Jt * K(m, j, w) * y[i,j] + yBezier
+                    zBezier = Jt * K(m, j, w) * z[i,j] + zBezier
+            surface = Surface(
+                    lambda u, w: [xBezier[int(u * (uCELLS)), int(w * (wCELLS))], yBezier[int(u * (uCELLS)), int(w * (wCELLS))], zBezier[int(u * (uCELLS)), int(w * (wCELLS))]],
+                    v_range=[0, 0.9999],
+                    u_range=[0, 0.9999],
+                    resolution = (uCELLS, wCELLS)
+                    #  fill_color='#D65435', 
+                    #  checkerboard_colors=['#D65435', '#DC9451']
+                )
+
+            return surface
+        
+        axes = ThreeDAxes()
+        nrN = 4
+        nrM = 4
+        uCELLS = 12
+        wCELLS = 10
+
+        x = np.zeros((nrN,nrM))
+        y = np.zeros((nrN,nrM))
+        z = np.zeros((nrN,nrM))
+        x1 = np.zeros((nrN,nrM))
+        y1 = np.zeros((nrN,nrM))
+        z1 = np.zeros((nrN,nrM))
+        x2 = np.zeros((nrN,nrM))
+        y2 = np.zeros((nrN,nrM))
+        z2 = np.zeros((nrN,nrM))
+
+        zTemp = np.array([0, 1, 1,0, 1, 1.5, 1.5, 1, 1, 1.5, 1.5, 1,0, 1, 1,0,])
+        for i in range (0,nrN):
+            for j in range(0, nrN):
+                x[i][j] = i-3
+                y[i][j] = j-2
+                z[i][j] = zTemp[4*(i)+(j)]
+
+        x1 = x.copy()
+        y1 = y.copy()
+        z1 = z.copy()
+
+
+        for i in range (0,nrN):
+            for j in range(0, nrN):
+                x1[i][j] = x1[i][j]+(nrN-1)
+
+        for i in range(0,nrN):
+            x1[0][i] = x[nrN-1][i]
+            y1[0][i] = y[nrN-1][i]
+            z1[0][i] = z[nrN-1][i]
+
+        x2 = x1.copy()
+        y2 = y1.copy()
+        z2 = z1.copy()
+        for i in range (0,nrN):
+            z2[1][i] = 2*z[nrN-1][i] - z[nrN-2][i]
+
+
+
+        #Pentru afisat punctele
+        dots = [Sphere(np.array([x[i][j], y[i][j], z[i][j]]), radius=0.04, color=YELLOW) for i in range(nrN) for j in range(nrN)]
+        dots1 = [Sphere(np.array([x1[i][j], y1[i][j], z1[i][j]]), radius=0.04, color=YELLOW) for i in range(nrN) for j in range(nrN)]
+        dots2 = [Sphere(np.array([x2[i][j], y2[i][j], z2[i][j]]), radius=0.04, color=YELLOW) for i in range(nrN) for j in range(nrN)]
+
+        
+
+
+
+        lines = VGroup()
+        for i in range(4):
+            for j in range(3):
+                line = Line(dots[i * 4 + j], dots[i * 4 + j + 1], stroke_width=2)
+                lines.add(line)
+
+        for i in range(3):
+            for j in range(4):
+                line = Line(dots[i * 4 + j], dots[(i + 1) * 4 + j], stroke_width=2)
+                lines.add(line)
+
+        lines1 = VGroup()
+        for i in range(4):
+            for j in range(3):
+                line = Line(dots1[i * 4 + j], dots1[i * 4 + j + 1], stroke_width=2)
+                lines1.add(line)
+
+        for i in range(3):
+            for j in range(4):
+                line = Line(dots1[i * 4 + j], dots1[(i + 1) * 4 + j], stroke_width=2)
+                lines1.add(line)
+        lines2 = VGroup()
+        for i in range(4):
+            for j in range(3):
+                line = Line(dots2[i * 4 + j], dots2[i * 4 + j + 1], stroke_width=2)
+                lines2.add(line)
+
+        for i in range(3):
+            for j in range(4):
+                line = Line(dots2[i * 4 + j], dots2[(i + 1) * 4 + j], stroke_width=2)
+                lines2.add(line)
+
+
+        # Define the animation to move the group
+        animations = []
+        for dot1, dot2 in zip(dots1, dots2):
+            animation = dot1.animate.move_to(dot2.get_center())
+            animations.append(animation)
+            
+        animations2 = []
+        for line1, line2 in zip(lines1, lines2):
+            animation = AnimationGroup(
+                line1.animate.put_start_and_end_on(line2.get_start(), line2.get_end())
+            )
+            animations2.append(animation)
+
+
+        suprafata=SuprafataBezier(x,y,z)
+        suprafata1=SuprafataBezier(x1,y1,z1)
+        suprafata2=SuprafataBezier(x2,y2,z2)
+        suprafata1.set_fill_by_checkerboard(RED,YELLOW)
+        suprafata2.set_fill_by_checkerboard(RED,YELLOW)
+        
+
+        #text
+        self.set_camera_orientation(phi=60 * DEGREES, theta=270 * DEGREES)
+        self.begin_ambient_camera_rotation(rate=0.2)
+        text = MathTex(r'\text{Racordarea a dou\u a suprafe\c te B\' ezier}')
+        text.to_edge(UP)
+        self.add_fixed_in_frame_mobjects(text)
+        self.add(*dots)
+        self.play(Write(lines), Write(suprafata))
+        self.wait(4)
+
+        self.play(FadeOut(text))
+        text = MathTex(r'\text{Racordarea a dou\u a suprafe\c te B\' ezier, }b_{3i}^{(1)}=b_{0i}^{(2)} ')
+        text.to_edge(UP)
+        self.add_fixed_in_frame_mobjects(text)
+        self.wait(2)
+
+        self.add(*dots1)
+        self.play(Write(lines1), Write(suprafata1))
+        self.wait(6)
+
+
+        self.play(FadeOut(text))
+        text = MathTex(r'\text{Racordarea neted\u a a dou\u a suprafe\c te B\' ezier, }')
+        text2 = MathTex(r'b_{1i}^{(2)}=\lambda(v)(b_{3i}^{(1)}-b_{2i}^{(1)})+b_{3i}^{(1)}')
+        text.to_edge(UP)
+        text2.next_to(text, DOWN)
+        self.add_fixed_in_frame_mobjects(text, text2)
+        self.stop_ambient_camera_rotation()
+        self.wait(2)
+
+        self.remove(lines1)
+        self.play(*animations,*animations2,ReplacementTransform(suprafata1,suprafata2),runtime = 4)
+        self.wait(2)
+        self.begin_ambient_camera_rotation(rate=0.3)
+        self.wait(10)
+        
