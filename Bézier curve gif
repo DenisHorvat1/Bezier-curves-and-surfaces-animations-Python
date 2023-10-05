@@ -1,0 +1,118 @@
+from manim import *
+import numpy as np
+
+class BezierCurve(Scene):
+    def construct(self):
+        
+        p0 = np.array([-5, -2, 0])
+        p1 = np.array([-3, 2, 0])
+        p2 = np.array([3, 2, 0])
+        p3 = np.array([4, -2, 0])
+
+
+        #Desenam punctele 
+        P0 = Dot(p0)
+        P1 = Dot(p1)
+        P2 = Dot(p2)
+        P3 = Dot(p3)
+
+
+        puncte_control = VGroup(P0, P1, P2, P3)
+   
+        P0_label = MathTex("b_{10}", font_size=25).next_to(P0, RIGHT)
+        P1_label = MathTex("b_{11}", font_size=25).next_to(P1, UP)
+        P2_label = MathTex("b_{12}", font_size=25).next_to(P2, UP)
+        P3_label = MathTex("b_{13}", font_size=25).next_to(P3, RIGHT)
+
+
+        control_labels = VGroup(P0_label,P1_label, P2_label, P3_label)
+        
+        
+        #Deseneaza liniile
+        line0 = Line(P0, P1, stroke_width=2)
+        line1 = Line(P1, P2, stroke_width=2)
+        line2 = Line(P2, P3, stroke_width=2)
+
+        lines = VGroup(line0, line1, line2,)
+        
+        # Definim combinari si polinoamele bernstein de ordin 3
+        def combinari(n, i):
+            return np.math.factorial(n) // (np.math.factorial(i) * np.math.factorial(n-i))
+
+        def bernstein(i, t):
+            return combinari(3, i) * t**i * (1-t)**(3-i)
+
+        # Generate punctele de pe curba
+
+        num_puncte = 100
+        valori_t = np.linspace(0, 1, num_puncte)
+        puncte_curba = np.zeros((num_puncte, 3))
+
+
+        for i, t in enumerate(valori_t):
+            puncte_curba[i] = bernstein(0, t)*p0 + bernstein(1, t)*p1 + bernstein(2, t)*p2 + bernstein(3, t)*p3
+
+
+        # Creare curba
+        curba = VMobject()
+        curba.set_points_smoothly(puncte_curba)
+        curba.set_color(RED)
+
+        # Define the updater functions
+        def update_lines(obj):
+            line0.put_start_and_end_on(P0.get_center(), P1.get_center())
+            line1.put_start_and_end_on(P1.get_center(), P2.get_center())
+            line2.put_start_and_end_on(P2.get_center(), P3.get_center())
+
+        def update_curve(obj):
+            new_points = np.zeros((num_puncte, 3))
+            for i, t in enumerate(valori_t):
+                new_points[i] = (
+                    bernstein(0, t) * P0.get_center()
+                    + bernstein(1, t) * P1.get_center()
+                    + bernstein(2, t) * P2.get_center()
+                    + bernstein(3, t) * P3.get_center()
+                )
+            obj.set_points_smoothly(new_points)
+        def update_labels(obj):
+            P0_label.next_to(P0.get_center(), RIGHT)
+            P1_label.next_to(P1.get_center(), UP)
+            P2_label.next_to(P2.get_center(), UP)
+            P3_label.next_to(P3.get_center(), RIGHT)
+
+        # Add the updaters to the objects
+        lines.add_updater(update_lines)
+        curba.add_updater(update_curve)
+        control_labels.add_updater(update_labels)
+
+
+
+        # Add curve and control points to scene
+        self.add(curba, puncte_control, control_labels, lines)
+
+
+        self.play(
+            P0.animate.move_to(np.array([-3, 0, 0])),
+            P1.animate.move_to(np.array([-4, 2, 0])),
+            P2.animate.move_to(np.array([2, 3, 0])),
+            P3.animate.move_to(np.array([5, -3, 0])), 
+            run_time=3
+            )
+        
+        self.play(
+            P0.animate.move_to(np.array([-3, -2, 0])),
+            P1.animate.move_to(np.array([-4, 2, 0])),
+            P2.animate.move_to(np.array([4, -2, 0])), 
+            P3.animate.move_to(np.array([3, 3, 0])),
+            run_time=3
+            )
+        
+        self.play(
+            P0.animate.move_to(np.array([-5, -2, 0])),
+            P1.animate.move_to(np.array([-3, 2, 0])),
+            P2.animate.move_to(np.array([3, 2, 0])),
+            P3.animate.move_to(np.array([4, -2, 0])), 
+            run_time=3
+            )
+
+
