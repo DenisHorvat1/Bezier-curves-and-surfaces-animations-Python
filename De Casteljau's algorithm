@@ -1,0 +1,128 @@
+from manim import *
+
+class BezierCurveAnimation(Scene):
+    def construct(self):
+        b00 = Dot(np.array([-5, -2, 0]))
+        b01 = Dot(np.array([-4, 2, 0]))
+        b02 = Dot(np.array([1, 2, 0]))
+        b03 = Dot(np.array([2, -2, 0]))
+        
+
+        b00_label = MathTex("b_{0}^{0}", font_size=25).next_to(b00, LEFT) 
+        b01_label = MathTex("b_{1}^{0}", font_size=25).next_to(b01, UP) 
+        b02_label = MathTex("b_{2}^{0}", font_size=25).next_to(b02, UP)
+        b03_label = MathTex("b_{3}^{0}", font_size=25).next_to(b03, RIGHT)
+        labels = VGroup(b00_label,b01_label,b02_label,b03_label)
+
+        line1 = Line(b00,b01)
+        line2 = Line(b01,b02)
+        line3 = Line(b02,b03)
+        lines_b0 = VGroup(line1, line2,line3)
+
+        t = ValueTracker(0)  # initial value of t is 0
+        t_text = Text("t = ").to_edge(LEFT)
+        t_value = DecimalNumber(t.get_value(), num_decimal_places=2).next_to(t_text, RIGHT)
+        t_value.add_updater(lambda v: v.set_value(t.get_value()))
+
+
+        #Punctele 
+        b10 = Dot(color=BLUE,).add_updater(lambda d: d.move_to(line1.point_from_proportion(t.get_value())))
+        b11 = Dot(color=BLUE,).add_updater(lambda d: d.move_to(line2.point_from_proportion(t.get_value())))
+        b12 = Dot(color=BLUE,).add_updater(lambda d: d.move_to(line3.point_from_proportion(t.get_value())))
+
+        b10_label = MathTex("b_{0}^{1}", font_size=25).next_to(b10, RIGHT)
+        b10_label.add_updater(lambda d: d.next_to(b10, RIGHT))
+        b11_label = MathTex("b_{1}^{1}", font_size=25).next_to(b11, UP)
+        b11_label.add_updater(lambda d: d.next_to(b11, UP))
+        b12_label = MathTex("b_{2}^{1}", font_size=25).next_to(b12, RIGHT)
+        b12_label.add_updater(lambda d: d.next_to(b12, RIGHT))
+
+        text = MathTex("b_{0}^{1} = b_{0}^{0}(1-t)+b_{1}^{0}t", font_size=40).to_edge(UP).to_edge(RIGHT) 
+       
+
+        #animatie 1
+        self.add(b00,b01,b02,b03,t_text,t_value,labels)
+        self.wait()
+
+        self.play(Create(lines_b0),Create(b10), Write(text), Write(b10_label))
+        self.play(t.animate.set_value(1), run_time=2)  # animate t from 1/2 to 0 over 2 seconds
+        self.play(t.animate.set_value(1/2), run_time=2)
+        self.wait()
+
+        #animatie 2
+        text2 = MathTex("b_{1}^{1} = b_{1}^{0}(1-t)+b_{2}^{0}t", font_size=40).next_to(text, DOWN)
+        text3 = MathTex("b_{2}^{1} = b_{2}^{0}(1-t)+b_{3}^{0}t", font_size=40).next_to(text2, DOWN)
+        self.play(Create(b11),Create(b12),Write(b11_label),Write(b12_label), Write(text2), Write(text3))
+        self.wait()
+
+        line_b10b11 = Line(color=BLUE).add_updater(lambda l: l.put_start_and_end_on(b10.get_center(), b11.get_center()))
+        line_b11b12 = Line(color=BLUE).add_updater(lambda l: l.put_start_and_end_on(b11.get_center(), b12.get_center()))
+
+
+
+        #animatie 3
+        
+        self.play(Create(line_b10b11),Create(line_b11b12))
+        self.play(t.animate.set_value(1/2), run_time=2)  # animate t from 1/2 to 0 over 2 seconds
+        self.play(t.animate.set_value(0), run_time=2)
+        self.play(t.animate.set_value(1/2), run_time=2)
+        self.wait()
+
+        #Cod
+        b20 = Dot(color=GREEN).add_updater(lambda d: d.move_to(line_b10b11.point_from_proportion(t.get_value())))
+        b21 = Dot(color=GREEN).add_updater(lambda d: d.move_to(line_b11b12.point_from_proportion(t.get_value())))
+
+        b20_label = MathTex("b_{0}^{2}", font_size=25).next_to(b20, LEFT)
+        b20_label.add_updater(lambda d: d.next_to(b20, UP))
+        b21_label = MathTex("b_{1}^{2}", font_size=25).next_to(b21, UP)
+        b21_label.add_updater(lambda d: d.next_to(b21, UP))
+        
+
+        line_b20b21 = Line(color=GREEN).add_updater(lambda l: l.put_start_and_end_on(b20.get_center(), b21.get_center()))
+        
+        #animatie 4
+        self.play(FadeOut(text))
+        self.play(FadeOut(text2))
+        self.play(FadeOut(text3))
+        text = MathTex("b_{0}^{2} = b_{0}^{1}(1-t)+b_{1}^{1}t", font_size=40).to_edge(UP).to_edge(RIGHT)
+        text2 = MathTex("b_{1}^{2} = b_{1}^{1}(1-t)+b_{2}^{1}t", font_size=40).next_to(text, DOWN)
+        self.play(Write(text))
+        self.play(Write(text2))
+    
+        self.play(Create(b20),Create(b21),Write(b20_label),Write(b21_label))
+        self.wait()
+        self.play(Create(line_b20b21))
+        self.play(t.animate.set_value(1/2), run_time=2)  # animate t from 1/2 to 0 over 2 seconds
+        self.play(t.animate.set_value(1), run_time=2)
+        self.play(t.animate.set_value(1/2), run_time=2)
+        self.wait()
+
+        bt = Dot(color=RED).add_updater(lambda d: d.move_to(line_b20b21.point_from_proportion(t.get_value())))
+        traced_path_bt = TracedPath(bt.get_center, stroke_color=RED, stroke_width=3)
+
+        bt_label = MathTex("b(t)", font_size=25).next_to(bt, UP)
+        bt_label.add_updater(lambda d: d.next_to(bt, UP))
+
+        #animatie 5
+        self.play(FadeOut(text))
+        self.play(FadeOut(text2))
+        text = MathTex("b(t) = b_{0}^{2}(1-t)+b_{1}^{2}t", font_size=40).to_edge(UP).to_edge(RIGHT)
+        self.play(Write(text))
+
+        puncte = VGroup(b00,b01,b02,b03,b10,b11,b12,b20,b21,bt)
+        segmente = VGroup(line1, line2, line3 ,line_b10b11, line_b11b12, line_b20b21)
+
+        #Adaug textul pentru t
+        self.add(puncte, labels, segmente, t_text, t_value)
+        self.play(Create(bt_label))
+        self.play(t.animate.set_value(0), run_time=2)
+
+        self.add(traced_path_bt)  # animate t from 1/2 to 0 over 2 seconds
+        self.play(t.animate.set_value(1), run_time=4)
+        traced_path_bt.remove()
+        self.play(t.animate.set_value(1/2), run_time=2)
+          # animate t from 0 to 1 over 2 seconds
+        self.play(FadeOut(text))
+        text = MathTex("b(t) = (1-t)^3b_{0}^0+3t(1-t)^2b_{1}^0+3t^2(1-t)b_{3}^0+t^3b_{3}^0", font_size=40).to_edge(UP).to_edge(RIGHT)
+        self.play(Write(text))
+        self.wait(2)
