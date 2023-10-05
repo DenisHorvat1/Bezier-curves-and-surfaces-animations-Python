@@ -1,0 +1,271 @@
+from manim import *
+import numpy as np
+
+class BezierCurve(Scene):
+    def construct(self):
+
+        p0 = np.array([-5, 1, 0])
+        p1 = np.array([-4.5, -1.5, 0])
+        p2 = np.array([-1, -2, 0])
+        p3 = np.array([-1, 0, 0])
+
+        p4 = np.array([0.5, 0, 0])
+        p5 = np.array([0.5, 2, 0])
+        p6 = np.array([5, 0, 0])
+        p7 = np.array([4, -2, 0])
+
+        #Desenam punctele 
+        P0 = Dot(p0)
+        P1 = Dot(p1)
+        P2 = Dot(p2)
+        P3 = Dot(p3)
+
+        P4 = Dot(p4)
+        P5 = Dot(p5)
+        P6 = Dot(p6)
+        P7 = Dot(p7)
+
+
+        puncte_control = VGroup(P0, P1, P2, P3)
+        puncte_control2 = VGroup(P4, P5, P6, P7)
+
+        P0_label = MathTex("b_{10}", font_size=25).next_to(P0, RIGHT)
+        P1_label = MathTex("b_{11}", font_size=25).next_to(P1, RIGHT)
+        P2_label = MathTex("b_{12}", font_size=25).next_to(P2, DOWN)
+        P3_label = MathTex("b_{13}", font_size=25).next_to(P3, RIGHT)
+
+        P4_label = MathTex("b_{20}", font_size=25).next_to(P4, UP)
+        P5_label = MathTex("b_{21}", font_size=25).next_to(P5, RIGHT)
+        P6_label = MathTex("b_{22}", font_size=25).next_to(P6, RIGHT)
+        P7_label = MathTex("b_{23}", font_size=25).next_to(P7, RIGHT)
+
+        control_labels = VGroup(P0_label,P1_label, P2_label, P3_label)
+        control_labels2 = VGroup(P4_label, P5_label, P6_label, P7_label)
+        
+        #Deseneaza liniile
+        line0 = Line(P0, P1, stroke_width=2)
+        line1 = Line(P1, P2, stroke_width=2)
+        line2 = Line(P2, P3, stroke_width=2)
+
+        line3 = Line(P3, P4, stroke_width=2)
+        line4 = Line(P4, P5, stroke_width=2)
+        line5 = Line(P5, P6, stroke_width=2)
+
+        lines = VGroup(line0, line1, line2)
+        lines2 = VGroup( line3,line4,line5)
+        
+        # Define binomial and Bernstein polynomials
+        def combinari(n, i):
+            return np.math.factorial(n) // (np.math.factorial(i) * np.math.factorial(n-i))
+
+        def bernstein(i, t):
+            return combinari(3, i) * t**i * (1-t)**(3-i)
+
+        # Generate points along curve using Bernstein polynomials
+
+        num_points = 100
+        t_values = np.linspace(0, 1, num_points)
+        curve_points = np.zeros((num_points, 3))
+        curve_points2 = np.zeros((num_points, 3))
+
+        for i, t in enumerate(t_values):
+            curve_points[i] = bernstein(0, t)*p0 + bernstein(1, t)*p1 + bernstein(2, t)*p2 + bernstein(3, t)*p3
+            curve_points2[i] = bernstein(0, t)*p4 + bernstein(1, t)*p5 + bernstein(2, t)*p6 + bernstein(3, t)*p7
+
+        # Create curve
+        
+        curve = VMobject()
+        curve.set_points_smoothly(curve_points)
+        curve.set_color(RED)
+
+        curve2 = VMobject()
+        curve2.set_points_smoothly(curve_points2)
+        curve2.set_color(ORANGE)
+
+        # Add curve and control points to scene
+        self.add(curve, curve2, puncte_control,puncte_control2, control_labels, control_labels2, lines, lines2)
+
+        ###################################################################################################
+        # Define the updater functions
+        def update_lines(obj):
+            line0.put_start_and_end_on(P0.get_center(), P1.get_center())
+            line1.put_start_and_end_on(P1.get_center(), P2.get_center())
+            line2.put_start_and_end_on(P2.get_center(), P3.get_center())
+ 
+
+        def update_curve(obj):
+            new_points = np.zeros((num_points, 3))
+            for i, t in enumerate(t_values):
+                new_points[i] = (
+                    bernstein(0, t) * P0.get_center()
+                    + bernstein(1, t) * P1.get_center()
+                    + bernstein(2, t) * P2.get_center()
+                    + bernstein(3, t) * P3.get_center()
+                )
+            obj.set_points_smoothly(new_points)
+        def update_labels(obj):
+            P0_label.next_to(P0.get_center(), RIGHT)
+            P1_label.next_to(P1.get_center(), LEFT)
+            P2_label.next_to(P2.get_center(), DOWN)
+            P3_label.next_to(P3.get_center(), LEFT)
+
+        # Add the updaters to the objects
+        lines.add_updater(update_lines)
+        curve.add_updater(update_curve)
+        control_labels.add_updater(update_labels)
+
+    ########################################################################################
+
+
+
+        # Define the updater functions
+        def update_lines(obj):
+            line3.put_start_and_end_on(P4.get_center(), P5.get_center())
+            line4.put_start_and_end_on(P5.get_center(), P6.get_center())
+            line5.put_start_and_end_on(P6.get_center(), P7.get_center())
+
+
+
+        def update_curve(obj):
+            new_points = np.zeros((num_points, 3))
+            for i, t in enumerate(t_values):
+                new_points[i] = (
+                    bernstein(0, t) * P4.get_center()
+                    + bernstein(1, t) * P5.get_center()
+                    + bernstein(2, t) * P6.get_center()
+                    + bernstein(3, t) * P7.get_center()
+                )
+            obj.set_points_smoothly(new_points)
+
+        def update_labels(obj):
+            P4_label.next_to(P4.get_center(), RIGHT)
+            P5_label.next_to(P5.get_center(), UP)
+            P6_label.next_to(P6.get_center(), UP)
+            P7_label.next_to(P7.get_center(), RIGHT)
+
+        # Add the updaters to the objects
+        lines2.add_updater(update_lines)
+        curve2.add_updater(update_curve)
+        control_labels2.add_updater(update_labels)
+
+
+        ################################################################################
+        text = MathTex(r'\text{Racordarea a dou\u a curbe Be\' zier}')
+        text.to_edge(UP)
+        self.play(Write(text))
+        self.wait(4)
+
+        self.play(FadeOut(text))
+        
+        text = MathTex(r'\text{Racordare de clasa }C^0, b_{13} = b_{20} ')
+        text.to_edge(UP)
+
+
+        self.play(Write(text))
+        self.wait(1)
+        self.play(P4.animate.move_to(P3),run_time=2)
+        p4 = p3
+        self.wait(2)
+        self.play(FadeOut(text))
+        text  =  MathTex(r'\text{Tangentele celor dou\u a curbe}')
+        text.to_edge(UP)
+        self.play(Write(text))
+        self.wait(1)
+
+
+
+        ############################################
+        # Define the tangent line
+        tangent_line = Line(stroke_width=6, color = BLUE)
+        tangent_length = 2.5 
+
+        # Define the ValueTracker for t
+        t = ValueTracker(0)
+        
+        # Define the updater function for the tangent line
+        def update_tangent_line(obj):
+            t_val = t.get_value()
+            tangent_vector = (
+                3 * (1 - t_val) ** 2 * (p1 - p0)
+                + 6 * (1 - t_val) * t_val * (p2 - p1)
+                + 3 * t_val ** 2 * (p3 - p2)
+            )
+
+            tangent_vector /= np.linalg.norm(tangent_vector)  # Normalize the tangent vector
+            tangent_vector *= tangent_length / 2  # Scale the tangent vector to half of the desired length
+
+            curve_point = curve.point_from_proportion(t_val)
+            tangent_line.put_start_and_end_on(curve_point - tangent_vector, curve_point + tangent_vector)
+       
+        # Add the updater to the tangent line
+        tangent_line.add_updater(update_tangent_line)
+
+        # Add the tangent line to the scene
+        self.add(tangent_line)
+
+        # Animate the movement of t from 0 to 1
+        self.play(t.animate.set_value(1), run_time=3)
+        ################################################################################
+        # Define the tangent line
+        tangent_line2 = Line(stroke_width=6, color = GREEN)
+        tangent_length = 2.5 
+
+        # Define the ValueTracker for t
+        t2 = ValueTracker(1)
+        
+        # Define the updater function for the tangent line
+        def update_tangent_line(obj):
+            t_val = t2.get_value()
+            tangent_vector = (
+                3 * (1 - t_val) ** 2 * (p5 - p4)
+                + 6 * (1 - t_val) * t_val * (p6 - p5)
+                + 3 * t_val ** 2 * (p7 - p6)
+            )
+
+            tangent_vector /= np.linalg.norm(tangent_vector)  # Normalize the tangent vector
+            tangent_vector *= tangent_length / 2  # Scale the tangent vector to half of the desired length
+
+            curve_points2 = curve2.point_from_proportion(t_val)
+            tangent_line2.put_start_and_end_on(curve_points2 - tangent_vector, curve_points2 + tangent_vector)
+       
+        # Add the updater to the tangent line
+        tangent_line2.add_updater(update_tangent_line)
+
+        def update_tangent_line(obj):
+            t_val = t2.get_value()
+            curve_point = curve2.point_from_proportion(t_val)
+            tangent_vector = curve2.derivative_function()(t_val)
+            tangent_length = 2  # Adjust the length of the tangent line
+            tangent_start = curve_point - tangent_length * tangent_vector
+            tangent_end = curve_point + tangent_length * tangent_vector
+
+            tangent_line2.put_start_and_end_on(tangent_start, tangent_end)
+        # Add the tangent line to the scene
+        self.add(tangent_line2)
+
+        # Animate the movement of t from 0 to 1
+        self.play(t2.animate.set_value(0), run_time=3)
+
+        self.play(FadeOut(text))
+        text  = MathTex(r'\text{Racordare de clasa }C^1, b_{21} = b_{13} -b_{12}')
+        text.to_edge(UP)
+        self.play(Write(text))
+        self.wait(1)
+        self.play(P5.animate.move_to(np.array([-1, 2, 0])),run_time=2)
+
+        p5 = np.array([-1, 2, 0])
+        self.wait(2)
+        self.play(t2.animate.set_value(0), run_time=2)
+
+
+        self.play(FadeOut(text))
+        text  = MathTex(r'\text{Racordare de clasa }C^2, b_{22} = b_{11} -4b_{12}+4b_{13}')
+        text.to_edge(UP)
+        self.play(Write(text))
+        self.wait(1)
+        self.play(P6.animate.move_to(np.array([-4.5, 6.5, 0])),run_time=2)
+        p6 = np.array([-4.5, 6.5, 0])
+        self.wait(2)
+        
+
+
