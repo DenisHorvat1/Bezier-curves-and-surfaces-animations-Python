@@ -1,1 +1,197 @@
+from manim import *
+
+import numpy as np
+import random
+class BezierSurface(ThreeDScene):
+    def construct(self):
+
+
+        def SuprafataBezier(x,y,z):
+            # Define number of cells in each direction
+            uCELLS = 12
+            wCELLS = 10
+            # Define number of control points in each direction
+            uPTS = np.size(x,0)
+            wPTS = np.size(x,1)
+
+            # Define number of divisions
+            n = uPTS - 1
+            m = wPTS - 1
+
+            # Define parametric variable
+            u = np.linspace(0,1,uCELLS)
+            w = np.linspace(0,1,wCELLS)
+
+            # Define the Bernstein polynomial
+            b = []
+            d = []
+
+            # Initialize matrices for x, y, z, and the Bezier curve
+            xBezier = np.zeros((uCELLS, wCELLS))
+            yBezier = np.zeros((uCELLS, wCELLS))
+            zBezier = np.zeros((uCELLS, wCELLS))
+
+            # Define the binomial coefficient
+            def Ni(n,i):
+                return np.math.factorial(n) / (np.math.factorial(i) * np.math.factorial(n-i))
+
+            def Mj(m,j):
+                return np.math.factorial(m) / (np.math.factorial(j) * np.math.factorial(m-j))
+
+            # Define the Bernstein polynomial J(u)n,i = (n i) u^i (1-u)^n-i
+            def J(n,i,u):
+                return np.matrix(Ni(n, i) * (u ** i) * (1-u) ** (n-i))
+
+            def K(m,j,w):
+                return np.matrix(Mj(m, j) * (w ** j) * (1-w) ** (m-j))
+
+            # Loop through each control point and calculate the Bezier surface
+            for i in range(0,uPTS):
+                for j in range(0, wPTS):
+                    b.append(J(n, i, u))
+                    d.append(K(m, j, w))
+
+                    # Transpose J
+                    Jt = J(n,i,u).transpose()
+
+                    # Calculate the Bezier surface Q(u,w) = SUM(i=0->n)SUM(j=0->m) B i,j * J(u)n,i * K(w)m,j
+                    xBezier = Jt * K(m, j, w) * x[i,j] + xBezier
+                    yBezier = Jt * K(m, j, w) * y[i,j] + yBezier
+                    zBezier = Jt * K(m, j, w) * z[i,j] + zBezier
+            surface = Surface(
+                    lambda u, w: [xBezier[int(u * (uCELLS)), int(w * (wCELLS))], yBezier[int(u * (uCELLS)), int(w * (wCELLS))], zBezier[int(u * (uCELLS)), int(w * (wCELLS))]],
+                    v_range=[0, 0.9999],
+                    u_range=[0, 0.9999],
+                    resolution = (uCELLS, wCELLS)
+                    #  fill_color='#D65435', 
+                    #  checkerboard_colors=['#D65435', '#DC9451']
+                )
+
+            return surface
+
+        
+        #Definim numarul de puncte de control pentru fiecare directie
+        nrN = 4
+        nrM = 4
+        #Definim numarul de celule pentru fiecare directie
+        uCELLS = 12
+        wCELLS = 11
+
+        #Definim punctele de control 
+        x = np.zeros((nrN,nrM))
+        y = np.zeros((nrN,nrM))
+        z = np.zeros((nrN,nrM))
+
+        x1 = np.zeros((nrN,nrM))
+        y1 = np.zeros((nrN,nrM))
+        z1 = np.zeros((nrN,nrM))
+
+        x2 = np.zeros((nrN,nrM))
+        y2 = np.zeros((nrN,nrM))
+        z2 = np.zeros((nrN,nrM))
+
+        zTemp = np.array([0, 1, 1,0, 1, 1.5, 1.5, 1, 1, 1.5, 1.5, 1,0, 1, 1,0,])
+        #Generam puncte de control 
+        for i in range (0,nrN):
+            for j in range(0, nrN):
+                x[i][j] = i-1.5
+                y[i][j] = j-1.5
+                z[i][j] = zTemp[4*(i)+(j)]
+
+                x1[i][j] = i-1.5
+                y1[i][j] = j-1.5
+                z1[i][j] = random.uniform(-1,1)
+
+                x2[i][j] = i-1.5
+                y2[i][j] = j-1.5
+                z2[i][j] = random.uniform(0,1)
+
+
+
+        #Definim puncte de tipul "Sphere" pentru a afisa punctele de control
+
+        dots = [Sphere(np.array([x[i][j], y[i][j], z[i][j]]), radius=0.02, color=YELLOW) for i in range(nrN) for j in range(nrM)]
+        dots1 = [Sphere(np.array([x1[i][j], y1[i][j], z1[i][j]]), radius=0.02, color=YELLOW) for i in range(nrN) for j in range(nrN)]
+        dots2 = [Sphere(np.array([x2[i][j], y2[i][j], z2[i][j]]), radius=0.02, color=YELLOW) for i in range(nrN) for j in range(nrN)]
+
+
+        lines = VGroup()
+        for i in range(4):
+            for j in range(3):
+                line = Line(dots[i * 4 + j], dots[i * 4 + j + 1], stroke_width=2)
+                lines.add(line)
+
+        for i in range(3):
+            for j in range(4):
+                line = Line(dots[i * 4 + j], dots[(i + 1) * 4 + j], stroke_width=2)
+                lines.add(line)
+
+        lines1 = VGroup()
+        for i in range(4):
+            for j in range(3):
+                line = Line(dots1[i * 4 + j], dots1[i * 4 + j + 1], stroke_width=2)
+                lines1.add(line)
+
+        for i in range(3):
+            for j in range(4):
+                line = Line(dots1[i * 4 + j], dots1[(i + 1) * 4 + j], stroke_width=2)
+                lines1.add(line)
+        
+        lines2 = VGroup()
+        for i in range(4):
+            for j in range(3):
+                line = Line(dots2[i * 4 + j], dots2[i * 4 + j + 1], stroke_width=2)
+                lines2.add(line)
+
+        for i in range(3):
+            for j in range(4):
+                line = Line(dots2[i * 4 + j], dots2[(i + 1) * 4 + j], stroke_width=2)
+                lines2.add(line)
+
+
+        surface=SuprafataBezier(x,y,z)
+        surface1=SuprafataBezier(x1,y1,z1)
+        surface2=SuprafataBezier(x2,y2,z2)
+
+        self.set_camera_orientation(phi=60 * DEGREES, theta=90 * DEGREES)
+        # Add the objects to the scene with the updaters
+        self.begin_ambient_camera_rotation(rate=0.5)
+
+
+        # self.add(*dots,surface, lines)
+        # #self.play(Write(surface),run_time=4)
+        # self.wait(1)
+        # self.remove(*dots,surface, lines)
+        # self.wait(1)
+        # self.add(*dots1,surface1, lines1)
+        # self.wait(3)
+        # self.remove(*dots1,surface1, lines1)
+        # self.wait(1)
+        # # self.add(*dots2,surface2, lines2)
+        # # self.wait(1)
+
+#         self.play(FadeOut(surface), run_time=2)
+
+        self.add(*dots)
+        self.play(Write(lines))
+        self.play(Write(surface))
+        self.wait(6)
+        self.play(FadeOut(surface), FadeOut(lines), run_time=2)
+        self.remove(*dots)
+        self.wait(1)
+
+        self.add(*dots1)
+        self.play(Write(lines1))
+        self.play(Write(surface1))
+        self.wait(6)
+        self.play(FadeOut(surface1), FadeOut(lines1), run_time=2)
+        self.remove(*dots1)
+
+        self.wait(1)
+        self.add(*dots2)
+        self.play(Write(lines2))
+        self.play(Write(surface2))
+        self.wait(6)
+        self.play(FadeOut(surface2), FadeOut(lines2), run_time=2)
+        self.remove(*dots2)
 
